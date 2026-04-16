@@ -1,6 +1,8 @@
 package com.shop.billing.domain.model.invoice;
 
+import com.shop.billing.domain.model.DomainException;
 import com.shop.billing.domain.model.IdGenerator;
+import io.micrometer.common.util.StringUtils;
 import lombok.*;
 
 import java.util.UUID;
@@ -25,5 +27,15 @@ public class PaymentSettings {
                 null,
                 method
         );
+    }
+
+    void assignGatewayCode(String gatewayCode) {
+        if (StringUtils.isBlank(gatewayCode)) {
+            throw new IllegalArgumentException();
+        }
+        if (this.getGatewayCode() != null) {
+            throw new DomainException("Gateway code already assigned");
+        }
+        setGatewayCode(gatewayCode);
     }
 }

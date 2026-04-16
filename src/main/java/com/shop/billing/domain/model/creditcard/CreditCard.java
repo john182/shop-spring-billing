@@ -2,8 +2,10 @@ package com.shop.billing.domain.model.creditcard;
 
 import com.shop.billing.domain.model.IdGenerator;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Setter(AccessLevel.PRIVATE)
@@ -21,8 +23,6 @@ public class CreditCard {
     private String brand;
     private Integer expMonth;
     private Integer expYear;
-
-    @Setter(AccessLevel.PUBLIC)
     private String gatewayCode;
 
     public static CreditCard brandNew(UUID customerId,
@@ -31,6 +31,16 @@ public class CreditCard {
                                       Integer expMonth,
                                       Integer expYear,
                                       String gatewayCreditCardCode) {
+
+
+        Objects.requireNonNull(customerId);
+        Objects.requireNonNull(expMonth);
+        Objects.requireNonNull(expYear);
+
+        if (StringUtils.isAnyBlank(lastNumbers, brand, gatewayCreditCardCode)) {
+            throw new IllegalArgumentException();
+        }
+
         return new CreditCard(
                 IdGenerator.generateTimeBasedUUID(),
                 OffsetDateTime.now(),
@@ -41,5 +51,12 @@ public class CreditCard {
                 expYear,
                 gatewayCreditCardCode
         );
+    }
+
+    public void setGatewayCode(String gatewayCode) {
+        if (StringUtils.isBlank(gatewayCode)) {
+            throw new IllegalArgumentException();
+        }
+        this.gatewayCode = gatewayCode;
     }
 }

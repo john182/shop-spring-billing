@@ -1,14 +1,13 @@
 package com.shop.billing.domain.model.invoice;
 
+import com.shop.billing.domain.model.DomainException;
 import com.shop.billing.domain.model.IdGenerator;
+import io.micrometer.common.util.StringUtils;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 
 @Setter(AccessLevel.PRIVATE)
@@ -43,6 +42,19 @@ public class Invoice {
 
     public static Invoice issue(String orderId, UUID customerId, Payer payer, Set<LineItem> items) {
 
+
+        Objects.requireNonNull(customerId);
+        Objects.requireNonNull(payer);
+        Objects.requireNonNull(items);
+
+        if (StringUtils.isBlank(orderId)) {
+            throw new IllegalArgumentException();
+        }
+
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+
         BigDecimal totalAmount = items.stream().map(LineItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new Invoice(
@@ -66,19 +78,52 @@ public class Invoice {
         return Collections.unmodifiableSet(this.items);
     }
 
-    public void markAsPaid() {
+    public boolean isCanceled() {
+        return InvoiceStatus.CANCELED.equals(this.getStatus());
+    }
 
+    public boolean isUnpaid() {
+        return InvoiceStatus.UNPAID.equals(this.getStatus());
+    }
+
+    public boolean isPaid() {
+        return InvoiceStatus.PAID.equals(this.getStatus());
+    }
+
+
+    public void markAsPaid() {
+        if (!isUnpaid()) {
+            throw new DomainException(String.format("Invoice %s with status %s cannot be marked as paid",
+                    this.getId(), this.getStatus().toString().toLowerCase()));
+        }
+        setPaidAt(OffsetDateTime.now());
+        setStatus(InvoiceStatus.PAID);
     }
 
     public void cancel() {
-
+        if (isCanceled()) {
+            throw new DomainException(String.format("Invoice %s is already canceled", this.getId()));
+        }
+        setCancelReason(cancelReason);
+        setCanceledAt(OffsetDateTime.now());
+        setStatus(InvoiceStatus.CANCELED);
     }
 
     public void assignPaymentGatewayCode(String code) {
-
+        if (!isUnpaid()) {
+            throw new DomainException(String.format("Invoice %s with status %s cannot be edited",
+                    this.getId(), this.getStatus().toString().toLowerCase()));
+        }
+        this.getPaymentSettings().assignGatewayCode(code);
     }
 
     public void changePaymentSettings(PaymentMethod method, UUID creditCardId) {
+
+        if (!isUnpaid()) {
+            throw new DomainException(String.format("Invoice %s with status %s cannot be edited",
+                    this.getId(), this.getStatus().toString().toLowerCase()));
+        }
+
         PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
         this.setPaymentSettings(paymentSettings);
     }
