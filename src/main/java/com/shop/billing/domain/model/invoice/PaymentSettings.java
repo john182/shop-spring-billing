@@ -5,6 +5,7 @@ import com.shop.billing.domain.model.IdGenerator;
 import io.micrometer.common.util.StringUtils;
 import lombok.*;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Setter(AccessLevel.PRIVATE)
@@ -21,6 +22,12 @@ public class PaymentSettings {
     private PaymentMethod method;
 
     public static PaymentSettings brandNew(PaymentMethod method, UUID creditCardId) {
+
+        Objects.requireNonNull(method);
+        if (method.equals(PaymentMethod.CREDIT_CARD)) {
+            Objects.requireNonNull(creditCardId);
+        }
+
         return new PaymentSettings(
                 IdGenerator.generateTimeBasedUUID(),
                 creditCardId,
