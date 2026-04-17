@@ -39,10 +39,10 @@ public class Invoice {
 
     private String cancelReason;
 
-
-    public static Invoice issue(String orderId, UUID customerId, Payer payer, Set<LineItem> items) {
-
-
+    public static Invoice issue(String orderId,
+                                UUID customerId,
+                                Payer payer,
+                                Set<LineItem> items) {
         Objects.requireNonNull(customerId);
         Objects.requireNonNull(payer);
         Objects.requireNonNull(items);
@@ -55,7 +55,8 @@ public class Invoice {
             throw new IllegalArgumentException();
         }
 
-        BigDecimal totalAmount = items.stream().map(LineItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAmount = items.stream().map(LineItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new Invoice(
                 IdGenerator.generateTimeBasedUUID(),
@@ -90,7 +91,6 @@ public class Invoice {
         return InvoiceStatus.PAID.equals(this.getStatus());
     }
 
-
     public void markAsPaid() {
         if (!isUnpaid()) {
             throw new DomainException(String.format("Invoice %s with status %s cannot be marked as paid",
@@ -100,7 +100,7 @@ public class Invoice {
         setStatus(InvoiceStatus.PAID);
     }
 
-    public void cancel() {
+    public void cancel(String cancelReason) {
         if (isCanceled()) {
             throw new DomainException(String.format("Invoice %s is already canceled", this.getId()));
         }
@@ -118,12 +118,10 @@ public class Invoice {
     }
 
     public void changePaymentSettings(PaymentMethod method, UUID creditCardId) {
-
         if (!isUnpaid()) {
             throw new DomainException(String.format("Invoice %s with status %s cannot be edited",
                     this.getId(), this.getStatus().toString().toLowerCase()));
         }
-
         PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
         this.setPaymentSettings(paymentSettings);
     }

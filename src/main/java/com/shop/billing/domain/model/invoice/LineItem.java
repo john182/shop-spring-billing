@@ -10,7 +10,6 @@ import java.util.Objects;
 @Setter(AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class LineItem {
     private Integer number;
     private String name;

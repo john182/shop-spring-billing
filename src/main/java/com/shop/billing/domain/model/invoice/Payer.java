@@ -9,7 +9,6 @@ import java.util.Objects;
 @Setter(AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class Payer {
     private String fullName;
     private String document;

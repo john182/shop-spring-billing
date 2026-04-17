@@ -7,7 +7,6 @@ import lombok.*;
 @Setter(AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class Address {
     private String street;
     private String number;
