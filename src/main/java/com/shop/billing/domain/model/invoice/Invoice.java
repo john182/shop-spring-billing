@@ -3,6 +3,7 @@ package com.shop.billing.domain.model.invoice;
 import com.shop.billing.domain.model.DomainException;
 import com.shop.billing.domain.model.IdGenerator;
 import io.micrometer.common.util.StringUtils;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -15,8 +16,10 @@ import java.util.*;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class Invoice {
 
+    @Id
     @EqualsAndHashCode.Include
     private UUID id;
     private String orderId;
@@ -29,8 +32,9 @@ public class Invoice {
 
     private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
-
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private PaymentSettings paymentSettings;
 
     private Set<LineItem> items = new HashSet<>();
@@ -123,6 +127,7 @@ public class Invoice {
                     this.getId(), this.getStatus().toString().toLowerCase()));
         }
         PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
+        paymentSettings.setInvoice(this);
         this.setPaymentSettings(paymentSettings);
     }
 }

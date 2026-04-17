@@ -3,6 +3,9 @@ package com.shop.billing.domain.model.invoice;
 import com.shop.billing.domain.model.DomainException;
 import com.shop.billing.domain.model.IdGenerator;
 import io.micrometer.common.util.StringUtils;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToOne;
 import lombok.*;
 
 import java.util.Objects;
@@ -19,7 +22,13 @@ public class PaymentSettings {
     private UUID id;
     private UUID creditCardId;
     private String gatewayCode;
+    @Enumerated(EnumType.STRING)
     private PaymentMethod method;
+
+    @OneToOne(mappedBy = "paymentSettings")
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PACKAGE)
+    private Invoice invoice;
 
     public static PaymentSettings brandNew(PaymentMethod method, UUID creditCardId) {
 
@@ -32,7 +41,8 @@ public class PaymentSettings {
                 IdGenerator.generateTimeBasedUUID(),
                 creditCardId,
                 null,
-                method
+                method,
+                null
         );
     }
 
