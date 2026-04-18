@@ -1,5 +1,6 @@
 package com.shop.billing.domain.model.invoice;
 
+import com.shop.billing.domain.model.AbstractAuditableAggregateRoot;
 import com.shop.billing.domain.model.DomainException;
 import com.shop.billing.domain.model.IdGenerator;
 import io.micrometer.common.util.StringUtils;
@@ -17,7 +18,7 @@ import java.util.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Invoice {
+public class Invoice extends AbstractAuditableAggregateRoot<Invoice> {
 
     @Id
     @EqualsAndHashCode.Include
@@ -66,7 +67,7 @@ public class Invoice {
         BigDecimal totalAmount = items.stream().map(LineItem::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return new Invoice(
+        Invoice invoice = new Invoice(
                 IdGenerator.generateTimeBasedUUID(),
                 orderId,
                 customerId,
@@ -81,8 +82,10 @@ public class Invoice {
                 payer,
                 null
         );
+        invoice.registerEvent(new InvoiceIssuedEvent(invoice.getId(),
+                invoice.getCustomerId(), invoice.getOrderId(), invoice.getIssuedAt()));
+        return invoice;
     }
-
     public Set<LineItem> getItems() {
         return Collections.unmodifiableSet(this.items);
     }
@@ -106,6 +109,7 @@ public class Invoice {
         }
         setPaidAt(OffsetDateTime.now());
         setStatus(InvoiceStatus.PAID);
+        registerEvent(new InvoicePaidEvent(this.getId(), this.getCustomerId(), this.getOrderId(), this.getPaidAt()));
     }
 
     public void cancel(String cancelReason) {
@@ -115,6 +119,7 @@ public class Invoice {
         setCancelReason(cancelReason);
         setCanceledAt(OffsetDateTime.now());
         setStatus(InvoiceStatus.CANCELED);
+        registerEvent(new InvoiceCanceledEvent(this.getId(), this.getCustomerId(), this.getOrderId(), this.getCanceledAt()));
     }
 
     public void assignPaymentGatewayCode(String code) {
